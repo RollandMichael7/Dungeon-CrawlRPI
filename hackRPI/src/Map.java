@@ -130,13 +130,6 @@ public class Map {
 		activeMonsters[i][j] = null;
 	}
 
-	public void fillMonsters() {
-		for (int i = 0; i < size; i++)
-			for (int j = 0; j < size; j++)
-				if (rooms[i][j] != 'P' && rooms[i][j] != 'S')
-					rooms[i][j] = 'M';
-	}
-
 	public void addItems() {
 		int i, j;
 		Item item;

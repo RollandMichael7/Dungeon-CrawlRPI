@@ -4,7 +4,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -20,10 +19,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-/**
- * 
+/** Driver class for Dungeon CrawlRPI 2017, a simple dungeon crawling game.
+ *  Made as a submission in the 24-hour HackRPI 2017 hackathon.
  * @author Michael Rolland
- * @version 4:42AM Build
+ * @version 7:24AM Build
  *
  */
 public class Dungeon_CrawlRPI extends Application {
@@ -41,6 +40,7 @@ public class Dungeon_CrawlRPI extends Application {
 
 	/** The minimum amount of damage the player can do */
 	private static final int MINIMUM_DAMAGE = 5;
+	private static final int INITIAL_HEALTH = 1000;
 
 	/**
 	 * The difficulty of the first level. Size of level difficulty n = 2^n. The
@@ -156,11 +156,12 @@ public class Dungeon_CrawlRPI extends Application {
 		mapText = new Text();
 		console = new Text(
 				"Welcome." + "\nUse the arrow keys to move." + "\nLEGEND" + "\nP - Player" + "\nS - Staircase"
-						+ "\nM - Monster" + "\nm - Deceased Monster" + "\n* - Pacified Monster" + "\nI - Item");
+						+ "\nM - Monster" + "\nm - Deceased Monster" + "\n* - Pacified Monster" + "\nI - Item" +
+						"\nX- Nothing of interest");
 
 		input = new TextField();
 
-		p = new Player(100, 100);
+		p = new Player(INITIAL_HEALTH, 100);
 		map = new Map(level, p);
 		map.addMonsters();
 
@@ -213,7 +214,7 @@ public class Dungeon_CrawlRPI extends Application {
 				input.requestFocus();
 			}
 		});
-
+		
 		game.setTop(stats);
 		ImageView image = new ImageView("https://i.imgur.com/8ys71mP.jpg");
 		StackPane imageP = new StackPane();
@@ -374,6 +375,7 @@ public class Dungeon_CrawlRPI extends Application {
 					p.consumePotion(item);
 				}
 			}
+			map.consumeItem(map.getY(), map.getX());
 		}
 		updateStats();
 		startMovement();
@@ -402,10 +404,10 @@ public class Dungeon_CrawlRPI extends Application {
 		println("You advanced to floor " + level + "!");
 		if (reputation < -20 || reputation > 20) {
 			println("Your reputation precedes you.");
-			if (reputation < -200) {
+			if (reputation < -400) {
 				println("The monsters have no chance of recovery from this genocide. Either you will die here, or their species will.");
-				map.fillMonsters();
-			} else if (reputation > 200) {
+				map.addMonsters();
+			} else if (reputation > 300) {
 				println("The monsters wish to repent for attacking you. They leave you gifts.");
 				map.addItems();
 			} else if (reputation < -100)
