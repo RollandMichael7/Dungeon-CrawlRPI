@@ -40,7 +40,8 @@ public class Dungeon_CrawlRPI extends Application {
 
 	/** The minimum amount of damage the player can do */
 	private static final int MINIMUM_DAMAGE = 5;
-	private static final int INITIAL_HEALTH = 1000;
+	private static final int INITIAL_HEALTH = 100;
+	private static final int INITIAL_CAPACITY = 50;
 
 	/**
 	 * The difficulty of the first level. Size of level difficulty n = 2^n. The
@@ -161,7 +162,7 @@ public class Dungeon_CrawlRPI extends Application {
 
 		input = new TextField();
 
-		p = new Player(INITIAL_HEALTH, 100);
+		p = new Player(INITIAL_HEALTH, INITIAL_CAPACITY);
 		map = new Map(level, p);
 		map.addMonsters();
 
@@ -424,7 +425,7 @@ public class Dungeon_CrawlRPI extends Application {
 
 		levelsPassed++;
 
-		if (levelsPassed > 4) {
+		if (levelsPassed > 3) {
 			Alert alert = new Alert(AlertType.INFORMATION);
 			alert.setTitle("Congratulation");
 			alert.setHeaderText(null);

@@ -42,7 +42,7 @@ public class Player extends Entity {
 	}
 	
 	public void consumePotion(Item i) {
-		inventory.remove(i);
+		removeItem(i);
 		health += maxHealth * (i.potency()/100);
 	}
 	
