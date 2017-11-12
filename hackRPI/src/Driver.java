@@ -23,11 +23,16 @@ import javafx.stage.Stage;
 
 public class Driver extends Application {
 
-	// image source:
+	// background image source:
+	// http://steamtradingcards.wikia.com/wiki/File:Magical_Diary_Background_Dungeon_Intersection_Lit.jpg
+	// stair image:
 	// https://duality587.wordpress.com/category/legend-of-grimrock/
+
+	// logo made in photoshop by myself
 
 	private static final String BG_PORTRAIT = "https://i.imgur.com/M3qtGs9.jpg";
 	private static final String STAIRS_PORTRAIT = "https://i.imgur.com/1nAgjvl.jpg";
+	private static final String LOGO = "https://i.imgur.com/FZN5bwg.png";
 
 	/** The minimum amount of damage the player can do */
 	private static final int MINIMUM_DAMAGE = 5;
@@ -147,9 +152,6 @@ public class Driver extends Application {
 		console = new Text(
 				"Welcome." + "\nUse the arrow keys to move." + "\nLEGEND" + "\nP - Player" + "\nS - Staircase"
 						+ "\nM - Monster" + "\nm - Deceased Monster" + "\n* - Pacified Monster" + "\nI - Item");
-		//mapText.setTextAlignment(TextAlignment.CENTER);
-		//console.setTextAlignment(TextAlignment.CENTER);
-		//console.setStyle("-fx-alignment: center");
 
 		input = new TextField();
 
@@ -193,7 +195,7 @@ public class Driver extends Application {
 		VBox enemyStats = new VBox(5);
 		enemyStats.getChildren().addAll(portrait, enemyHealth);
 
-		Button start = new Button("Enter the Dungeon");
+		ImageView start = new ImageView(LOGO);
 		start.setOnMouseClicked(e -> {
 			game.setCenter(vbox);
 			game.setRight(enemyStats);
@@ -285,14 +287,15 @@ public class Driver extends Application {
 		if (inputText.toUpperCase().equals("Y")) {
 			nextLevel();
 			startMovement();
+			portrait.setImage(new Image(BG_PORTRAIT));
 		} else if (inputText.toUpperCase().equals("N")) {
 			println("You pass over the stairs.");
 			startMovement();
+			portrait.setImage(new Image(BG_PORTRAIT));
 		} else {
 			getResponse('S');
 			println("Huh?");
 		}
-		portrait.setImage(new Image(BG_PORTRAIT));
 	}
 
 	public void parseMonsterInput() {
@@ -342,6 +345,8 @@ public class Driver extends Application {
 				println("The " + target + " respects your submission" + "\nand promises not to attack again.");
 				println("You feel proud of yourself.");
 				reputation += target.maxHealth();
+				// TODO: Make pacified monsters wake up or attack later or
+				// something
 				map.pacifyMonster(map.getY(), map.getX());
 			}
 		}

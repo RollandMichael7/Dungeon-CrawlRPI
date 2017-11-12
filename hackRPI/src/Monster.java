@@ -6,7 +6,6 @@ public class Monster extends Entity {
 	
 	
 	/* Image sources:
-	 * http://steamtradingcards.wikia.com/wiki/File:Magical_Diary_Background_Dungeon_Intersection_Lit.jpg
 	 * http://wowwiki.wikia.com/wiki/File:3D-Orc.png
 	 * https://www.artstation.com/artwork/dungeon-and-dragon-monster-manual
 	 * http://ex515.wikia.com/wiki/Pizza_Steve
