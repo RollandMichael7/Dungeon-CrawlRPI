@@ -33,15 +33,17 @@ public class Player extends Entity {
 		inventory.add(i);
 		if (i.attack() >= 0)
 			attack += i.attack();
+		currentWeight += i.weight();
 	}
 	
 	public void removeItem(Item i) {
 		inventory.remove(i);
+		currentWeight -= i.weight();
 	}
 	
 	public void consumePotion(Item i) {
 		inventory.remove(i);
-		health *= 1+(i.potency()/100);
+		health += maxHealth * (i.potency()/100);
 	}
 	
 	public String getInventory() {

@@ -71,7 +71,7 @@ public class Map {
 
 	public char moveVertical(int dy) {
 		if (playerY + dy >= 0 && playerY + dy < size) {
-			revealedRooms[playerY][playerX] = rooms[playerX][playerY];
+			revealedRooms[playerY][playerX] = rooms[playerY][playerX];
 			revealedRooms[playerY + dy][playerX] = 'P';
 			playerY += dy;
 			return rooms[playerY][playerX];
@@ -108,8 +108,8 @@ public class Map {
 			}
 			rooms[i][j] = 'M';
 			int health = 0, attack = 0;
-				health = (int) (Math.random() * (level * 25));
-				attack = (int) (Math.random() * (level * 10));
+				health = (int) (Math.random() * (level * 15) + (level*5));
+				attack = (int) (Math.random() * (level * 5) + (level*5));
 				m = new Monster(health, attack);
 				activeMonsters[i][j] = m;
 		}

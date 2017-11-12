@@ -29,36 +29,52 @@ public class Driver extends Application {
 	private static final String BG_PORTRAIT = "https://i.imgur.com/M3qtGs9.jpg";
 	private static final String STAIRS_PORTRAIT = "https://i.imgur.com/1nAgjvl.jpg";
 
-	private Map map;
-	private int level = 1;
-	private Player p;
+	/** The minimum amount of damage the player can do */
+	private static final int MINIMUM_DAMAGE = 5;
 
+	/**
+	 * The difficulty of the first level. Size of level difficulty n = 2^n. The
+	 * game lasts for 5 levels. Note: The game does not render correctly after
+	 * level 5.
+	 */
+	private static final int FIRST_LEVEL = 1;
+
+	// Main classes
+	private Map map;
+	private Player p;
+	private Item item;
+	private Monster target;
+
+	// Progress fields
+	private int level;
+	private int levelsPassed;
+	private int reputation = 0;
+
+	// Main Layout
 	private BorderPane game;
 	private ImageView portrait;
 
-	private int reputation = 0;
+	// I/O Nodes
+	private Text mapText;
+	private Text console;
+	private TextField input;
+	private ListView scroll;
 
-	public Text mapText;
-	public Text console;
-	public TextField input;
-	public ListView scroll;
-
+	// Data text (HUD)
 	private Text health;
 	private Text weight;
 	private Text attack;
 	private Text exp;
-
-	private Item item;
-
-	private Monster target;
 	private Text enemyHealth;
 
+	// Input parsing fields
 	private String inputText;
-
 	private boolean stairsInput = false;
 	private boolean monsterInput = false;
 	private boolean itemInput = false;
 
+	// TextField I/O handlers, for switching between moving the player
+	// and accepting text input.
 	public EventHandler<KeyEvent> inputHandler = new EventHandler<KeyEvent>() {
 		@Override
 		public void handle(KeyEvent e) {
@@ -121,16 +137,19 @@ public class Driver extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
+		level = FIRST_LEVEL;
+		levelsPassed = 0;
+
 		game = new BorderPane();
-		VBox vbox = new VBox(10);
+		VBox vbox = new VBox(5);
 		scroll = new ListView();
 		mapText = new Text();
 		console = new Text(
 				"Welcome." + "\nUse the arrow keys to move." + "\nLEGEND" + "\nP - Player" + "\nS - Staircase"
 						+ "\nM - Monster" + "\nm - Deceased Monster" + "\n* - Pacified Monster" + "\nI - Item");
-		mapText.setTextAlignment(TextAlignment.CENTER);
-		console.setTextAlignment(TextAlignment.CENTER);
-		console.setStyle("-fx-alignment: center");
+		//mapText.setTextAlignment(TextAlignment.CENTER);
+		//console.setTextAlignment(TextAlignment.CENTER);
+		//console.setStyle("-fx-alignment: center");
 
 		input = new TextField();
 
@@ -194,14 +213,14 @@ public class Driver extends Application {
 		image.fitWidthProperty().bind(stage.widthProperty());
 		image.fitHeightProperty().bind(stage.heightProperty());
 		imageP.getChildren().addAll(image, start);
-		Scene scene = new Scene(game, 800, 450);
+		Scene scene = new Scene(game, 816, 459);
 		stage.setScene(scene);
 
 		game.setCenter(imageP);
 		stats.setAlignment(Pos.CENTER);
 
 		stage.show();
-		stage.setTitle("hackRPI 2017");
+		stage.setTitle("Dungeon CrawlRPI");
 		start.requestFocus();
 	}
 
@@ -210,14 +229,16 @@ public class Driver extends Application {
 		mapText.setText(map.toString());
 		if (tile == 'S') {
 			portrait.setImage(new Image(STAIRS_PORTRAIT));
-			println("You found the stairs! Go down them? (Y/N)");
+			println("You found the stairs! Do you dare to go deeper? (Y/N)");
 			getResponse('S');
 		}
 
 		else if (tile == 'I') {
 			println("You see something on the floor...");
+			println("Do you pick it up? (Y/N)");
 			item = map.getItem(map.getY(), map.getX());
 			portrait.setImage(new Image(item.getPortrait()));
+			getResponse('I');
 		}
 
 		else if (tile == 'M') {
@@ -276,27 +297,27 @@ public class Driver extends Application {
 
 	public void parseMonsterInput() {
 		if (inputText.toUpperCase().equals("Y")) {
-			int power = (int) (Math.random() * p.attack() + 10);
+			int power = (int) (Math.random() * p.attack() + MINIMUM_DAMAGE);
 			boolean won = p.attack(target, power);
 			println("You attack and do " + power + " damage.");
 			enemyHealth.setText(target.currentHealth());
 			if (won) {
 				portrait.setImage(new Image(BG_PORTRAIT));
 				println("You ruthlessly murdered the " + target + ".");
-				println("You gained " + target.exp() + " experience.");
 				if (reputation > -10 && reputation < 10)
-					println("It had to be you or it.");
+					println("You had no choice.");
 				else {
-					if (reputation < -150)
-						println("What have you done.");
+					if (reputation < -300)
+						println("What have you done. What have you become.");
+					else if (reputation < -250)
+						println("Killing these monsters is your purpose.");
+					else if (reputation < -175)
+						println("You feel nothing. You don't even remember "
+								+ "\nwhy you're here, but you have a new purpose now.");
 					else if (reputation < -100)
-						println("Killing these monsters is your divine purpose. You are a god.");
-					else if (reputation < -75)
-						println("You feel nothing. You don't even remember how you got here, but you have a new purpose now.");
+						println("It never had a chance. You could've spared it, and you didn't.");
 					else if (reputation < -50)
 						println("It was nothing but a slight inconvenience.");
-					else if (reputation < -25)
-						println("It never had a chance. You could've spared it, and you didn't.");
 					else if (reputation < -10)
 						println("You aren't exactly happy to do it, but you wouldn't hesitate to do it again.");
 					else if (reputation > 30)
@@ -307,17 +328,18 @@ public class Driver extends Application {
 						println("It was mercy.");
 				}
 				reputation -= target.maxHealth();
+				println("You gained " + target.exp() + " experience.");
 				map.destroyMonster(map.getY(), map.getX());
 			} else
 				reputation -= power;
 			updateStats();
 			startMovement();
 		} else {
-			if (reputation < -100) {
+			if (reputation < -200) {
 				println("The " + target + " knows who you are. It won't let you get away!");
 				updateMap();
 			} else {
-				println("The " + target + " respects your submission and promises not to attack again.");
+				println("The " + target + " respects your submission" + "\nand promises not to attack again.");
 				println("You feel proud of yourself.");
 				reputation += target.maxHealth();
 				map.pacifyMonster(map.getY(), map.getX());
@@ -328,7 +350,7 @@ public class Driver extends Application {
 
 	public void parseItemInput() {
 		if (inputText.toUpperCase().equals("Y")) {
-			println("You decide to pick up the item. It weighs "+item.weight()+" units.");
+			println("You decide to pick up the item. It weighs " + item.weight() + " units.");
 			if (item.weight() + p.getCurrentWeight() > p.getCapacity())
 				println("It's too heavy!");
 			else {
@@ -343,9 +365,10 @@ public class Driver extends Application {
 				}
 			}
 		}
+		updateStats();
 		startMovement();
 	}
-	
+
 	// TODO: make inventory management work
 	public void manageInv() {
 		println(p.getInventory());
@@ -369,21 +392,27 @@ public class Driver extends Application {
 		println("You advanced to floor " + level + "!");
 		if (reputation < -20 || reputation > 20) {
 			println("Your reputation precedes you.");
-			if (reputation < -20)
-				println("The monsters have heard about your murder spree.");
-			else if (reputation < -50)
-				println("The monsters know to fear you, but do not fear death.");
-			else if (reputation < -100)
-				println("The monsters are determined to stop you.");
-			else if (reputation < -150) {
+			if (reputation < -200) {
 				println("The monsters have no chance of recovery from this genocide. Either you will die here, or their species will.");
 				map.fillMonsters();
-			}
+			} else if (reputation > 200) {
+				println("The monsters wish to repent for attacking you. They leave you gifts.");
+				map.addItems();
+			} else if (reputation < -100)
+				println("The monsters are determined to stop you.");
+			else if (reputation < -50)
+				println("The monsters know to fear you, but do not fear death.");
+			else if (reputation < -20)
+				println("The monsters have heard about your murder spree.");
 		}
 		map.addMonsters();
 		map.addItems();
+
 		updateMap();
-		if (level > 5) {
+
+		levelsPassed++;
+
+		if (levelsPassed > 4) {
 			Alert alert = new Alert(AlertType.INFORMATION);
 			alert.setTitle("Congratulation");
 			alert.setHeaderText(null);

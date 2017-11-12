@@ -1,7 +1,5 @@
 
-public class Potion extends Item {
-	private int potency;
-	
+public class Potion extends Item {	
 	// image source:
 	// https://skyrim.gamepedia.com/Potion_of_Invisibility
 	public Potion(int weight) {
