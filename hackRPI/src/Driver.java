@@ -1,5 +1,4 @@
 import javafx.application.Application;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -7,7 +6,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -25,7 +23,11 @@ import javafx.stage.Stage;
 
 public class Driver extends Application {
 
-	private static final String PORTRAIT_BG = "https://i.imgur.com/M3qtGs9.jpg";
+	// image source:
+	// https://duality587.wordpress.com/category/legend-of-grimrock/
+
+	private static final String BG_PORTRAIT = "https://i.imgur.com/M3qtGs9.jpg";
+	private static final String STAIRS_PORTRAIT = "https://i.imgur.com/1nAgjvl.jpg";
 
 	private Map map;
 	private int level = 1;
@@ -46,29 +48,32 @@ public class Driver extends Application {
 	private Text attack;
 	private Text exp;
 
+	private Item item;
+
 	private Monster target;
-	private ProgressBar enemyHealth;
+	private Text enemyHealth;
 
 	private String inputText;
 
-	public EventHandler<KeyEvent> stairsHandler = new EventHandler<KeyEvent>() {
+	private boolean stairsInput = false;
+	private boolean monsterInput = false;
+	private boolean itemInput = false;
+
+	public EventHandler<KeyEvent> inputHandler = new EventHandler<KeyEvent>() {
 		@Override
 		public void handle(KeyEvent e) {
 			if (e.getCode() == KeyCode.ENTER) {
 				inputText = input.getText();
 				println("> " + inputText);
 				input.setText("");
-				parseStairsInput();
-			}
-		}
-	};
-	public EventHandler<KeyEvent> monsterHandler = new EventHandler<KeyEvent>() {
-		public void handle(KeyEvent e) {
-			if (e.getCode() == KeyCode.ENTER) {
-				inputText = input.getText();
-				println("> " + inputText);
-				input.setText("");
-				parseMonsterInput();
+				if (input.getText().toUpperCase() == "INV")
+					manageInv();
+				if (stairsInput)
+					parseStairsInput();
+				else if (monsterInput)
+					parseMonsterInput();
+				else if (itemInput)
+					parseItemInput();
 			}
 		}
 	};
@@ -100,7 +105,12 @@ public class Driver extends Application {
 					println("You hit a wall!");
 				else
 					updateMap();
-			}
+			} else if (e.getCode() == KeyCode.ENTER)
+				if (input.getText().toUpperCase() == "INV") {
+					println("> " + inputText);
+					input.setText("");
+					manageInv();
+				}
 		}
 	};
 	private char tile;
@@ -139,7 +149,7 @@ public class Driver extends Application {
 		HBox stats = new HBox(5);
 		health = new Text("Health: " + p.health());
 		health.setFill(Color.GREEN);
-		weight = new Text("Weight: " + p.getWeight());
+		weight = new Text("Weight: " + p.getWeightString());
 		weight.setFill(Color.BROWN);
 		attack = new Text("Attack: " + p.attack());
 		attack.setFill(Color.RED);
@@ -154,12 +164,13 @@ public class Driver extends Application {
 		vbox.getChildren().addAll(stack1, scroll, input);
 		vbox.setAlignment(Pos.CENTER);
 
-		portrait = new ImageView(PORTRAIT_BG);
+		portrait = new ImageView(BG_PORTRAIT);
 		portrait.fitHeightProperty().set(300);
 		portrait.fitWidthProperty().set(300);
 		portrait.preserveRatioProperty().set(true);
 
-		enemyHealth = new ProgressBar();
+		enemyHealth = new Text();
+		enemyHealth.setTextAlignment(TextAlignment.CENTER);
 		VBox enemyStats = new VBox(5);
 		enemyStats.getChildren().addAll(portrait, enemyHealth);
 
@@ -177,16 +188,14 @@ public class Driver extends Application {
 			}
 		});
 
-		Monster m = new Monster(10, 10);
-		Image i = new Image(m.getPortrait());
 		game.setTop(stats);
 		ImageView image = new ImageView("https://i.imgur.com/8ys71mP.jpg");
 		StackPane imageP = new StackPane();
 		image.fitWidthProperty().bind(stage.widthProperty());
 		image.fitHeightProperty().bind(stage.heightProperty());
 		imageP.getChildren().addAll(image, start);
-		Scene spoop = new Scene(game, 800, 450);
-		stage.setScene(spoop);
+		Scene scene = new Scene(game, 800, 450);
+		stage.setScene(scene);
 
 		game.setCenter(imageP);
 		stats.setAlignment(Pos.CENTER);
@@ -197,42 +206,25 @@ public class Driver extends Application {
 	}
 
 	public void updateMap() {
-		portrait.setImage(new Image(PORTRAIT_BG));
+		portrait.setImage(new Image(BG_PORTRAIT));
 		mapText.setText(map.toString());
 		if (tile == 'S') {
+			portrait.setImage(new Image(STAIRS_PORTRAIT));
 			println("You found the stairs! Go down them? (Y/N)");
-			getStairsResponse();
-		} else if (tile == 'I') {
-			Item i;
-			println("You see something shiny on the floor...");
-			if (map.getItem(map.getY(), map.getX()) == null) {
-				int weight = (int) (Math.random() * 25);
-				int type = (int)(Math.random() * 2);
-				if (type == 1) {
-					int atk = (int) (Math.random() * 10 * level);
-					i = new Sword(map, weight, atk);
-				} else {
-					i = new Potion(map, weight);
-				}
-				map.placeItem(i, map.getY(), map.getX());
-			}
+			getResponse('S');
+		}
+
+		else if (tile == 'I') {
+			println("You see something on the floor...");
+			item = map.getItem(map.getY(), map.getX());
+			portrait.setImage(new Image(item.getPortrait()));
 		}
 
 		else if (tile == 'M') {
-			int health = 0, attack = 0, difficulty = 0;
 			println("You encounter a monster!");
-			if (map.getMonster(map.getY(), map.getX()) == null) {
-				health = (int) (Math.random() * (level * 25));
-				attack = (int) (Math.random() * (level * 10));
-				difficulty = level * 5;
-				target = new Monster(health, attack);
-
-				map.placeMonster(target, map.getY(), map.getX());
-			} else
-				target = map.getMonster(map.getY(), map.getX());
-
+			target = map.getMonster(map.getY(), map.getX());
 			portrait.setImage(new Image(target.getPortrait()));
-			enemyHealth.setProgress(target.healthProgress());
+			enemyHealth.setText("Health: " + target.currentHealth());
 
 			println("It's a " + target + " with " + target.health() + " health!");
 			println("It " + target.atkType() + " you for " + target.attack() + " damage!");
@@ -248,21 +240,24 @@ public class Driver extends Application {
 			} else {
 				println("You have " + p.health() + " health left.");
 				println("Fight back? (Y/N)");
-				getMonsterResponse();
+				getResponse('M');
 			}
-
 			updateStats();
 		}
 	}
 
-	public void getStairsResponse() {
+	public void getResponse(char key) {
+		stairsInput = false;
+		monsterInput = false;
+		itemInput = false;
+		if (key == 'S')
+			stairsInput = true;
+		else if (key == 'M')
+			monsterInput = true;
+		else if (key == 'I')
+			itemInput = true;
 		input.removeEventHandler(KeyEvent.KEY_PRESSED, movementHandler);
-		input.setOnKeyPressed(stairsHandler);
-	}
-
-	public void getMonsterResponse() {
-		input.removeEventHandler(KeyEvent.KEY_PRESSED, movementHandler);
-		input.setOnKeyPressed(monsterHandler);
+		input.setOnKeyPressed(inputHandler);
 	}
 
 	public void parseStairsInput() {
@@ -273,9 +268,10 @@ public class Driver extends Application {
 			println("You pass over the stairs.");
 			startMovement();
 		} else {
-			getStairsResponse();
+			getResponse('S');
 			println("Huh?");
 		}
+		portrait.setImage(new Image(BG_PORTRAIT));
 	}
 
 	public void parseMonsterInput() {
@@ -283,8 +279,9 @@ public class Driver extends Application {
 			int power = (int) (Math.random() * p.attack() + 10);
 			boolean won = p.attack(target, power);
 			println("You attack and do " + power + " damage.");
+			enemyHealth.setText(target.currentHealth());
 			if (won) {
-				portrait.setImage(new Image(PORTRAIT_BG));
+				portrait.setImage(new Image(BG_PORTRAIT));
 				println("You ruthlessly murdered the " + target + ".");
 				println("You gained " + target.exp() + " experience.");
 				if (reputation > -10 && reputation < 10)
@@ -329,8 +326,34 @@ public class Driver extends Application {
 		startMovement();
 	}
 
+	public void parseItemInput() {
+		if (inputText.toUpperCase().equals("Y")) {
+			println("You decide to pick up the item. It weighs "+item.weight()+" units.");
+			if (item.weight() + p.getCurrentWeight() > p.getCapacity())
+				println("It's too heavy!");
+			else {
+				p.addItem(item);
+				if (item.attack() >= 0)
+					println("You got a sword!" + "\nYour attack increased by " + item.attack() + "!");
+				else {
+					// TODO: let player choose when to use potion
+					println("You got a potion!" + "\nIt seems potent enough to increase your health by "
+							+ item.potency() + " percent!");
+					p.consumePotion(item);
+				}
+			}
+		}
+		startMovement();
+	}
+	
+	// TODO: make inventory management work
+	public void manageInv() {
+		println(p.getInventory());
+		println("Select an item to use/drop.");
+	}
+
 	public void startMovement() {
-		input.removeEventHandler(KeyEvent.KEY_PRESSED, stairsHandler);
+		input.removeEventHandler(KeyEvent.KEY_PRESSED, inputHandler);
 		input.setOnKeyPressed(movementHandler);
 	}
 
@@ -374,13 +397,14 @@ public class Driver extends Application {
 		health.setText("Health: " + p.health());
 		if (p.health() > 75)
 			health.setFill(Color.GREEN);
-		if (p.health < 75)
-			health.setFill(Color.YELLOW);
-		else if (p.health() < 50)
-			health.setFill(Color.ORANGE);
 		else if (p.health() < 25)
 			health.setFill(Color.DARKRED);
-		weight.setText("Weight: " + p.getWeight());
+		else if (p.health() < 50)
+			health.setFill(Color.ORANGE);
+		else if (p.health < 75)
+			health.setFill(Color.YELLOW);
+
+		weight.setText("Weight: " + p.getWeightString());
 		attack.setText("Attack: " + p.attack());
 		exp.setText("Experience: " + p.getProgress());
 	}

@@ -1,14 +1,18 @@
 
 public abstract class Item {
-	protected Map m;
 	protected String name;
 	protected int weight;
+	protected int attack;
+	protected double potency;
 	protected String portraitURL;
 	
 	public abstract void use();
 	
-	public Item(Map m, int weight) {this.m=m; this.weight = weight;};
-	public String portraitURL() { return portraitURL; }
+	public Item(int weight) {this.weight = weight;};
+	public String getPortrait() { return portraitURL; }
+	public int weight() { return weight; }
+	public int attack() { return attack; }
+	public double potency() { return potency; }
 	
 	@Override
 	public String toString() {

@@ -10,8 +10,8 @@ public class Map {
 
 	private Random RNG = new Random();
 	private Player p;
-	private boolean playerDropped = false;
-	private boolean stairsDropped = false;
+	private boolean playerDropped;
+	private boolean stairsDropped;
 	private int playerX;
 	private int playerY;
 	private int stairsI;
@@ -27,6 +27,7 @@ public class Map {
 		this.level = level;
 		int x;
 		this.p = p;
+		
 		rooms = new char[size][size];
 		revealedRooms = new char[size][size];
 		activeMonsters = new Monster[size][size];
@@ -97,6 +98,7 @@ public class Map {
 
 	public void addMonsters() {
 		int i, j;
+		Monster m;
 		for (int k = 0; k < level * 3; k++) {
 			i = stairsI;
 			j = stairsJ;
@@ -105,11 +107,12 @@ public class Map {
 				j = RNG.nextInt(size);
 			}
 			rooms[i][j] = 'M';
+			int health = 0, attack = 0;
+				health = (int) (Math.random() * (level * 25));
+				attack = (int) (Math.random() * (level * 10));
+				m = new Monster(health, attack);
+				activeMonsters[i][j] = m;
 		}
-	}
-
-	public void placeMonster(Monster m, int i, int j) {
-		activeMonsters[i][j] = m;
 	}
 
 	public Monster getMonster(int i, int j) {
@@ -136,6 +139,7 @@ public class Map {
 
 	public void addItems() {
 		int i, j;
+		Item item;
 		for (int k = 0; k < level - 2; k++) {
 			i = stairsI;
 			j = stairsJ;
@@ -144,11 +148,16 @@ public class Map {
 				j = RNG.nextInt(size);
 			}
 			rooms[i][j] = 'I';
+			int weight = (int) (Math.random() * 25);
+			int type = (int) (Math.random() * 2);
+			if (type == 1) {
+				int atk = (int) (Math.random() * 10 * level);
+				item = new Sword(weight, atk);
+			} else {
+				item = new Potion(weight);
+			}
+			activeItems[i][j] = item;
 		}
-	}
-
-	public void placeItem(Item item, int i, int j) {
-		activeItems[i][j] = item;
 	}
 
 	public Item getItem(int i, int j) {

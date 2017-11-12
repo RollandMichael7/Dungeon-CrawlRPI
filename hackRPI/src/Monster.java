@@ -50,8 +50,8 @@ public class Monster extends Entity {
 		return health;
 	}
 	
-	public int healthProgress() {
-		return health / maxHealth;
+	public String currentHealth() {
+		return health+" / "+maxHealth;
 	}
 	
 	public String getPortrait() {

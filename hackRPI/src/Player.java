@@ -1,9 +1,11 @@
+import java.util.ArrayList;
+
 public class Player extends Entity {
 	private int capacity;
 	private int currentWeight;
 	private int level;
 	private int expToNextLevel;
-	private Item[] inventory;
+	private ArrayList<Item> inventory;
 
 	public Player(int health, int capacity) {
 		super(health);
@@ -12,10 +14,42 @@ public class Player extends Entity {
 		expToNextLevel = 100;
 		this.capacity = capacity;
 		attack = 20;
+		inventory = new ArrayList<Item>();
 	}
 
-	public String getWeight() {
+	public String getWeightString() {
 		return currentWeight + "/" + capacity;
+	}
+	
+	public int getCurrentWeight() {
+		return currentWeight;
+	}
+	
+	public int getCapacity() {
+		return capacity;
+	}
+	
+	public void addItem(Item i) {
+		inventory.add(i);
+		if (i.attack() >= 0)
+			attack += i.attack();
+	}
+	
+	public void removeItem(Item i) {
+		inventory.remove(i);
+	}
+	
+	public void consumePotion(Item i) {
+		inventory.remove(i);
+		health *= 1+(i.potency()/100);
+	}
+	
+	public String getInventory() {
+		String s="";
+		for (int i=0; i<inventory.size(); i++)
+			 s += i+". "+inventory.get(i) + "\n";
+		return s;
+			
 	}
 
 	@Override
